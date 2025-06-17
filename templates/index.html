@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Current Data</title>
+    <style>
+        .filters {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .filter-group {
+            margin-bottom: 10px;
+        }
+        .filter-group label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .filter-group input {
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .filter-group button {
+            padding: 5px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .filter-group button:hover {
+            background-color: #45a049;
+        }
+        .date-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .pagination {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 16px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            color: #333;
+        }
+        .pagination a:hover {
+            background-color: #f5f5f5;
+        }
+        .pagination .active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        .pagination .disabled {
+            color: #999;
+            pointer-events: none;
+        }
+        .pagination-info {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stock Current Data</h1>
+    
+    <div class="filters">
+        <form method="GET" action="/">
+            <div class="filter-group">
+                <label for="symbol">Symbol:</label>
+                <input type="text" id="symbol" name="symbol" value="{{ request.args.get('symbol', '') }}" placeholder="Enter part of stock symbol (e.g., 'AAP' for 'AAPL')">
+            </div>
+            <div class="filter-group">
+                <label>Timestamp Range:</label>
+                <div class="date-range">
+                    <input type="datetime-local" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}" placeholder="Start Date">
+                    <span>to</span>
+                    <input type="datetime-local" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}" placeholder="End Date">
+                </div>
+            </div>
+            <div class="filter-group">
+                <button type="submit">Filter</button>
+                <button type="button" onclick="clearFilters()">Clear Filters</button>
+            </div>
+            <input type="hidden" name="page" value="1">
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    {% for column in columns %}
+                        <td>{{ row[column] }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if current_page > 1 %}
+            <a href="{{ url_for('index', page=current_page-1, symbol=request.args.get('symbol', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">&laquo; Previous</a>
+        {% else %}
+            <span class="disabled">&laquo; Previous</span>
+        {% endif %}
+
+        {% set start_page = current_page - 2 if current_page - 2 > 0 else 1 %}
+        {% set end_page = current_page + 2 if current_page + 2 < total_pages else total_pages %}
+        
+        {% for p in range(start_page, end_page + 1) %}
+            {% if p == current_page %}
+                <span class="active">{{ p }}</span>
+            {% else %}
+                <a href="{{ url_for('index', page=p, symbol=request.args.get('symbol', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if current_page < total_pages %}
+            <a href="{{ url_for('index', page=current_page+1, symbol=request.args.get('symbol', ''), start_date=request.args.get('start_date', ''), end_date=request.args.get('end_date', '')) }}">Next &raquo;</a>
+        {% else %}
+            <span class="disabled">Next &raquo;</span>
+        {% endif %}
+    </div>
+    <div class="pagination-info">
+        Showing {{ (current_page-1)*10 + 1 }} to {{ current_page*10 if current_page*10 < total_items else total_items }} of {{ total_items }} entries
+    </div>
+    {% endif %}
+
+    <script>
+        function clearFilters() {
+            document.getElementById('symbol').value = '';
+            document.getElementById('start_date').value = '';
+            document.getElementById('end_date').value = '';
+            document.querySelector('form').submit();
+        }
+    </script>
+</body>
+</html>
