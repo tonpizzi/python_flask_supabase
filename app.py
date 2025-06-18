@@ -12,7 +12,7 @@ url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
 supabase = create_client(url, key)
 
-ITEMS_PER_PAGE = int(os.getenv("ITEMS_PER_PAGE")  # Number of items to show per page
+ITEMS_PER_PAGE = int(os.getenv("ITEMS_PER_PAGE"))  # Number of items to show per page
 
 @app.route('/')
 def index():
